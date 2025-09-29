@@ -21,4 +21,10 @@ pub enum Commands {
         #[arg(long)]
         date: Option<String>,
     },
+
+    /// AI agent with natural language processing
+    Ai {
+        /// Natural language command for the AI agent
+        prompt: Vec<String>,
+    },
 }

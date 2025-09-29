@@ -8,3 +8,7 @@ pub mod commands;
 
 #[cfg(feature = "ai")]
 pub mod ai;
+
+#[cfg(feature = "ai")]
+pub mod agent;
+

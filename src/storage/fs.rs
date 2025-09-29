@@ -55,7 +55,7 @@ impl Storage for FsStorage {
             .map_err(|e| AppError::Storage(format!("Could not write to {}: {}", path.display(), e)))
     }
 
-    fn iter_days(&self) -> AppResult<Box<dyn Iterator<Item = AppResult<DayLog>>>> {
+    fn iter_days(&self) -> AppResult<Vec<DayLog>> {
         let entries = fs::read_dir(&self.data_dir)
             .map_err(|e| AppError::Storage(format!("Could not read data directory: {}", e)))?;
 
@@ -71,14 +71,17 @@ impl Storage for FsStorage {
                     .map_err(|e| AppError::Storage(format!("Could not read file {}: {}", path.display(), e)))?;
 
                 match serde_json::from_str::<DayLog>(&content) {
-                    Ok(day_log) => day_logs.push(Ok(day_log)),
-                    Err(e) => day_logs.push(Err(AppError::Storage(format!(
+                    Ok(day_log) => day_logs.push(day_log),
+                    Err(e) => return Err(AppError::Storage(format!(
                         "Could not parse JSON from {}: {}", path.display(), e
-                    )))),
+                    ))),
                 }
             }
         }
 
-        Ok(Box::new(day_logs.into_iter()))
+        // Sort by date
+        day_logs.sort_by_key(|day_log| day_log.date);
+
+        Ok(day_logs)
     }
 }

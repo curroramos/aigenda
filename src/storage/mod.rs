@@ -3,8 +3,8 @@ use chrono::NaiveDate;
 
 pub mod fs;
 
-pub trait Storage {
+pub trait Storage: Send + Sync {
     fn load_day(&self, date: NaiveDate) -> AppResult<DayLog>;
     fn save_day(&self, day: &DayLog) -> AppResult<()>;
-    fn iter_days(&self) -> AppResult<Box<dyn Iterator<Item = AppResult<DayLog>>>>;
+    fn iter_days(&self) -> AppResult<Vec<DayLog>>;
 }

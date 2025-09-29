@@ -1,11 +1,38 @@
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 
+#[cfg(feature = "ai")]
+use chrono::{DateTime, Utc};
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Note {
     pub when: String, // RFC3339
     pub text: String,
     pub tags: Vec<String>, // keep; we'll use later
+}
+
+impl Note {
+    #[cfg(feature = "ai")]
+    pub fn new(text: String) -> Self {
+        Self {
+            when: Utc::now().to_rfc3339(),
+            text,
+            tags: Vec::new(),
+        }
+    }
+
+    #[cfg(feature = "ai")]
+    pub fn when(&self) -> DateTime<Utc> {
+        DateTime::parse_from_rfc3339(&self.when)
+            .unwrap_or_else(|_| Utc::now().into())
+            .with_timezone(&Utc)
+    }
+
+    #[cfg(feature = "ai")]
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -22,6 +49,22 @@ impl DayLog {
             notes: Vec::new(),
         }
     }
+
+    #[cfg(feature = "ai")]
+    pub fn add_note(&mut self, note: Note) {
+        self.notes.push(note);
+    }
+
+    #[cfg(feature = "ai")]
+    pub fn notes(&self) -> &[Note] {
+        &self.notes
+    }
+
+    #[cfg(feature = "ai")]
+    pub fn notes_mut(&mut self) -> &mut Vec<Note> {
+        &mut self.notes
+    }
+
 }
 
 mod date_format {

@@ -4,7 +4,6 @@ use chrono::NaiveDate;
 pub fn run_list<S: Storage>(store: &S, all: bool, date: Option<String>) -> AppResult<()> {
     if all {
         for day in store.iter_days()? {
-            let day = day?;
             print_day(&day);
         }
         return Ok(());

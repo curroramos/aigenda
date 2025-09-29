@@ -1,6 +1,6 @@
 use crate::{
     cli::{Cli, Commands},
-    commands::{add, list},
+    commands::{add, list, agent},
     error::AppResult,
     storage::{fs::FsStorage, Storage},
 };
@@ -15,10 +15,11 @@ impl<S: Storage> App<S> {
         Self { store, cli }
     }
 
-    pub fn run(&self) -> AppResult<()> {
+    pub async fn run(&self) -> AppResult<()> {
         match &self.cli.command {
             Commands::Add { text } => add::run_add(&self.store, text.clone()),
             Commands::List { all, date } => list::run_list(&self.store, *all, date.clone()),
+            Commands::Ai { prompt } => agent::handle_agent_command(prompt.clone()).await,
         }
     }
 }
