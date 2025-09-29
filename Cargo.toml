@@ -1,6 +1,31 @@
 [package]
 name = "aigenda"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+
+[features]
+ai = []
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+directories = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+
+# Feature-gated (Phase 2)
+reqwest = { version = "0.12", features = ["json"], optional = true }
+tokio   = { version = "1", features = ["full"], optional = true }
+dotenvy = { version = "0.15", optional = true }
+
+[features.ai]
+dependencies = ["reqwest", "tokio", "dotenvy"]
+
+[dev-dependencies]
+assert_cmd = "2"
+tempfile = "3"
+
+[alias]
+fmt = "fmt --all"
+lint = "clippy --all-targets --all-features -- -D warnings"
