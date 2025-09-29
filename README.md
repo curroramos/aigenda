@@ -64,84 +64,84 @@ aigenda list --date 2025-01-20
 
 ```mermaid
 graph TD
-     %% Entry Point
-     User[👤 User] --> CLI[🖥️ CLI Commands]
-     CLI --> |"cargo run -- add 'text'"| AddCmd[📝 Add Command]
-     CLI --> |"cargo run -- list [--all] [--date]"| ListCmd[📋 List Command]
+    %% Entry Point
+    User[👤 User] --> CLI[🖥️ CLI Commands]
+    CLI --> |"cargo run -- add 'text'"| AddCmd[📝 Add Command]
+    CLI --> |"cargo run -- list [--all] [--date]"| ListCmd[📋 List Command]
 
-     %% Core Application Flow
-     Main[🚀 main.rs] --> |clap::Parser| CliParser[📋 cli.rs]
-     CliParser --> |Commands enum| AppBuilder[🏗️ app::build_default]
-     AppBuilder --> |creates| AppInstance[🎯 App<FsStorage>]
-     AppInstance --> |app.run()| CommandRouter[🔀 Command Router]
+    %% Core Application Flow
+    Main[🚀 main.rs] --> |"clap::Parser"| CliParser[📋 cli.rs]
+    CliParser --> |"Commands enum"| AppBuilder[🏗️ app::build_default]
+    AppBuilder --> |"creates"| AppInstance[🎯 App<FsStorage>]
+    AppInstance --> |"app.run()"| CommandRouter[🔀 Command Router]
 
-     %% Command Processing
-     CommandRouter --> |Commands::Add| AddHandler[commands/add.rs]
-     CommandRouter --> |Commands::List| ListHandler[commands/list.rs]
+    %% Command Processing
+    CommandRouter --> |"Commands::Add"| AddHandler[commands/add.rs]
+    CommandRouter --> |"Commands::List"| ListHandler[commands/list.rs]
 
-     %% Storage Layer
-     AddHandler --> |store.load_day()| Storage[💾 Storage Trait]
-     AddHandler --> |store.save_day()| Storage
-     ListHandler --> |store.load_day()| Storage
-     ListHandler --> |store.iter_days()| Storage
+    %% Storage Layer
+    AddHandler --> |"store.load_day()"| Storage[💾 Storage Trait]
+    AddHandler --> |"store.save_day()"| Storage
+    ListHandler --> |"store.load_day()"| Storage
+    ListHandler --> |"store.iter_days()"| Storage
 
-     Storage --> |implemented by| FsStorage[📁 FsStorage]
-     Storage --> |future: sqlite| SqliteStorage[🗄️ SqliteStorage]
+    Storage --> |"implemented by"| FsStorage[📁 FsStorage]
+    Storage --> |"future: sqlite"| SqliteStorage[🗄️ SqliteStorage]
 
-     %% File System Storage Details
-     FsStorage --> |reads/writes| JsonFiles[📄 JSON Files]
-     JsonFiles --> |format: YYYY-MM-DD.json| DataDir[📂 ~/.local/share/aigenda/]
+    %% File System Storage Details
+    FsStorage --> |"reads/writes"| JsonFiles[📄 JSON Files]
+    JsonFiles --> |"format: YYYY-MM-DD.json"| DataDir[📂 ~/.local/share/aigenda/]
 
-     %% Data Models
-     AddHandler --> |creates| Note[📝 Note]
-     ListHandler --> |displays| DayLog[📅 DayLog]
-     Note --> |part of| DayLog
-     FsStorage --> |serializes/deserializes| DayLog
+    %% Data Models
+    AddHandler --> |"creates"| Note[📝 Note]
+    ListHandler --> |"displays"| DayLog[📅 DayLog]
+    Note --> |"part of"| DayLog
+    FsStorage --> |"serializes/deserializes"| DayLog
 
-     %% Model Structure
-     DayLog --> |contains| NotesList[📝 Vec<Note>]
-     DayLog --> |contains| DateField[📅 NaiveDate]
-     Note --> |contains| Timestamp[⏰ RFC3339 timestamp]
-     Note --> |contains| TextContent[📄 text content]
-     Note --> |contains| TagsList[🏷️ Vec<String>]
+    %% Model Structure
+    DayLog --> |"contains"| NotesList[📝 Vec<Note>]
+    DayLog --> |"contains"| DateField[📅 NaiveDate]
+    Note --> |"contains"| Timestamp[⏰ RFC3339 timestamp]
+    Note --> |"contains"| TextContent[📄 text content]
+    Note --> |"contains"| TagsList[🏷️ Vec<String>]
 
-     %% Error Handling
-     AddHandler --> |AppResult| ErrorTypes[⚠️ AppError]
-     ListHandler --> |AppResult| ErrorTypes
-     FsStorage --> |AppResult| ErrorTypes
-     ErrorTypes --> |variants| IoError[💥 IO Error]
-     ErrorTypes --> |variants| JsonError[💥 JSON Error]
-     ErrorTypes --> |variants| DateParseError[💥 Date Parse Error]
-     ErrorTypes --> |variants| StorageError[💥 Storage Error]
+    %% Error Handling
+    AddHandler --> |"AppResult"| ErrorTypes[⚠️ AppError]
+    ListHandler --> |"AppResult"| ErrorTypes
+    FsStorage --> |"AppResult"| ErrorTypes
+    ErrorTypes --> |"variants"| IoError[💥 IO Error]
+    ErrorTypes --> |"variants"| JsonError[💥 JSON Error]
+    ErrorTypes --> |"variants"| DateParseError[💥 Date Parse Error]
+    ErrorTypes --> |"variants"| StorageError[💥 Storage Error]
 
-     %% Future Extensions (Phase 2)
-     AppInstance -.-> |future| AIFeatures[🤖 AI Features]
-     AIFeatures -.-> |claude.rs| ClaudeAPI[🧠 Claude API]
-     CommandRouter -.-> |future| ExportCmd[📤 Export Command]
-     CommandRouter -.-> |future| SearchCmd[🔍 Search Command]
+    %% Future Extensions (Phase 2)
+    AppInstance -.-> |"future"| AIFeatures[🤖 AI Features]
+    AIFeatures -.-> |"claude.rs"| ClaudeAPI[🧠 Claude API]
+    CommandRouter -.-> |"future"| ExportCmd[📤 Export Command]
+    CommandRouter -.-> |"future"| SearchCmd[🔍 Search Command]
 
-     %% Configuration
-     FsStorage --> |uses| ProjectDirs[📁 ProjectDirs]
-     ProjectDirs --> |determines| DataDir
+    %% Configuration
+    FsStorage --> |"uses"| ProjectDirs[📁 ProjectDirs]
+    ProjectDirs --> |"determines"| DataDir
 
-     %% Testing
-     TestSuite[🧪 Tests] --> |integration| CliSmoke[CLI Smoke Tests]
-     TestSuite --> |unit| StorageTests[Storage Tests]
+    %% Testing
+    TestSuite[🧪 Tests] --> |"integration"| CliSmoke[CLI Smoke Tests]
+    TestSuite --> |"unit"| StorageTests[Storage Tests]
 
-     %% Style the diagram
-     classDef userClass fill:#e1f5fe
-     classDef coreClass fill:#f3e5f5
-     classDef storageClass fill:#e8f5e8
-     classDef modelClass fill:#fff3e0
-     classDef errorClass fill:#ffebee
-     classDef futureClass fill:#f5f5f5,stroke-dasharray: 5 5
+    %% Style the diagram
+    classDef userClass fill:#e1f5fe
+    classDef coreClass fill:#f3e5f5
+    classDef storageClass fill:#e8f5e8
+    classDef modelClass fill:#fff3e0
+    classDef errorClass fill:#ffebee
+    classDef futureClass fill:#f5f5f5,stroke-dasharray: 5 5
 
-     class User,CLI userClass
-     class Main,CliParser,AppInstance,CommandRouter,AddHandler,ListHandler coreClass
-     class Storage,FsStorage,JsonFiles,DataDir storageClass
-     class DayLog,Note,NotesList,DateField,Timestamp,TextContent,TagsList modelClass
-     class ErrorTypes,IoError,JsonError,DateParseError,StorageError errorClass
-     class AIFeatures,ClaudeAPI,ExportCmd,SearchCmd,SqliteStorage futureClass
+    class User,CLI userClass
+    class Main,CliParser,AppInstance,CommandRouter,AddHandler,ListHandler coreClass
+    class Storage,FsStorage,JsonFiles,DataDir storageClass
+    class DayLog,Note,NotesList,DateField,Timestamp,TextContent,TagsList modelClass
+    class ErrorTypes,IoError,JsonError,DateParseError,StorageError errorClass
+    class AIFeatures,ClaudeAPI,ExportCmd,SearchCmd,SqliteStorage futureClass
 ```
 
 ## 🗃️ Data Storage
