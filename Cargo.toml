@@ -19,10 +19,11 @@ reqwest = { version = "0.12", features = ["json"], optional = true }
 dotenvy = { version = "0.15", optional = true }
 async-trait = { version = "0.1", optional = true }
 uuid = { version = "1.0", features = ["v4"], optional = true }
+dirs = { version = "5", optional = true }
 
 [features]
 default = ["tokio"]
-ai = ["tokio", "reqwest", "dotenvy", "async-trait", "uuid"]
+ai = ["tokio", "reqwest", "dotenvy", "async-trait", "uuid", "dirs"]
 
 [dev-dependencies]
 assert_cmd = "2"

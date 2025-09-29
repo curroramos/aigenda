@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use serde_json::Value;
 use std::collections::VecDeque;
+use std::path::PathBuf;
+use std::fs;
+use crate::error::AppResult;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConversationMessage {
@@ -40,7 +43,7 @@ pub struct ToolResult {
     pub execution_time_ms: u64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ConversationMemory {
     messages: VecDeque<ConversationMessage>,
     max_messages: usize,
@@ -188,5 +191,48 @@ impl ConversationMemory {
 
     pub fn context_token_count(&self) -> usize {
         self.current_context_tokens
+    }
+
+    // Persistent storage methods
+    pub fn load_from_file(file_path: &PathBuf, max_messages: usize, max_context_tokens: usize) -> AppResult<Self> {
+        if file_path.exists() {
+            let contents = fs::read_to_string(file_path)
+                .map_err(|e| crate::error::AppError::Storage(format!("Failed to read memory file: {}", e)))?;
+
+            let mut memory: ConversationMemory = serde_json::from_str(&contents)
+                .map_err(|e| crate::error::AppError::Storage(format!("Failed to parse memory file: {}", e)))?;
+
+            // Update limits in case they changed
+            memory.max_messages = max_messages;
+            memory.max_context_tokens = max_context_tokens;
+
+            Ok(memory)
+        } else {
+            Ok(Self::new(max_messages, max_context_tokens))
+        }
+    }
+
+    pub fn save_to_file(&self, file_path: &PathBuf) -> AppResult<()> {
+        // Ensure directory exists
+        if let Some(parent) = file_path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| crate::error::AppError::Storage(format!("Failed to create memory directory: {}", e)))?;
+        }
+
+        let contents = serde_json::to_string_pretty(self)
+            .map_err(|e| crate::error::AppError::Storage(format!("Failed to serialize memory: {}", e)))?;
+
+        fs::write(file_path, contents)
+            .map_err(|e| crate::error::AppError::Storage(format!("Failed to write memory file: {}", e)))?;
+
+        Ok(())
+    }
+
+    pub fn get_memory_file_path() -> PathBuf {
+        // Store in user data directory
+        let mut path = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
+        path.push("aigenda");
+        path.push("conversation_memory.json");
+        path
     }
 }
