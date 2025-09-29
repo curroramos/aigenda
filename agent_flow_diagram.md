@@ -2,67 +2,66 @@
 
 ## Complete Agent Architecture and Flow
 
-```mermaid
-graph TD
-    A[User Input: 'aigenda ai "request"'] --> B[Agent::execute_command]
+```mermaidgraph TD
+    A["User Input: \"aigenda ai 'request'\""] --> B["Agent::execute_command"]
 
-    B --> C[Store user message in memory]
-    C --> D[Initialize execution loop]
+    B --> C["Store user message in memory"]
+    C --> D["Initialize execution loop"]
     D --> E{Loop count < 5 & continue_loop?}
 
     E -->|Yes| F{First iteration?}
-    F -->|Yes| G[generate_initial_prompt]
-    F -->|No| H[generate_continuation_prompt]
+    F -->|Yes| G["generate_initial_prompt"]
+    F -->|No| H["generate_continuation_prompt"]
 
-    G --> I[Send prompt to Claude API]
+    G --> I["Send prompt to Claude API"]
     H --> I
 
-    I --> J[Receive assistant response]
-    J --> K[Add response to conversation]
-    K --> L[execute_tools_from_response]
+    I --> J["Receive assistant response"]
+    J --> K["Add response to conversation"]
+    K --> L["execute_tools_from_response"]
 
-    L --> M[extract_all_json_from_response]
+    L --> M["extract_all_json_from_response"]
     M --> N{JSON objects found?}
 
-    N -->|Yes| O[Parse each JSON object]
+    N -->|Yes| O["Parse each JSON object"]
     O --> P{Valid tool call?}
-    P -->|Yes| Q[Show confirmation prompt]
+    P -->|Yes| Q["Show confirmation prompt"]
     Q --> R{User confirms?}
-    R -->|Yes| S[execute_tool_call]
-    R -->|No| T[Tool execution cancelled]
-    P -->|No| U[Skip invalid JSON]
+    R -->|Yes| S["execute_tool_call"]
+    R -->|No| T["Tool execution cancelled"]
+    P -->|No| U["Skip invalid JSON"]
 
-    S --> V[Add tool results to conversation]
+    S --> V["Add tool results to conversation"]
     T --> V
     U --> V
     N -->|No| V
 
-    V --> W[should_continue_chain]
+    V --> W["should_continue_chain"]
     W --> X{Continue signals found?}
-    X -->|Yes| Y[Set continue_loop = true]
-    X -->|No| Z[Set continue_loop = false]
+    X -->|Yes| Y["Set continue_loop = true"]
+    X -->|No| Z["Set continue_loop = false"]
 
-    Y --> AA[Update execution context]
+    Y --> AA["Update execution context"]
     Z --> AA
     AA --> E
 
-    E -->|No| BB[Save memory to disk]
-    BB --> CC[Return full conversation]
-    CC --> DD[Display to user]
+    E -->|No| BB["Save memory to disk"]
+    BB --> CC["Return full conversation"]
+    CC --> DD["Display to user"]
 
     %% Memory System
-    EE[ConversationMemory] --> FF[Load from disk on startup]
-    FF --> GG[Store messages, tool calls, results]
-    GG --> HH[Token-based pruning]
-    HH --> II[Save to disk after execution]
+    EE["ConversationMemory"] --> FF["Load from disk on startup"]
+    FF --> GG["Store messages, tool calls, results"]
+    GG --> HH["Token-based pruning"]
+    HH --> II["Save to disk after execution"]
 
     %% Tool Registry
-    JJ[ToolRegistry] --> KK[Auto-discover tools]
-    KK --> LL[NotesTool with enhanced schemas]
-    LL --> MM[Generate tools description]
+    JJ["ToolRegistry"] --> KK["Auto-discover tools"]
+    KK --> LL["NotesTool with enhanced schemas"]
+    LL --> MM["Generate tools description"]
 
     %% Confirmation System
-    NN[Confirmation Prompt] --> OO["🤖 AI Agent wants to execute:"]
+    NN["Confirmation Prompt"] --> OO["🤖 AI Agent wants to execute:"]
     OO --> PP["Tool: X, Action: Y, Parameters: Z"]
     PP --> QQ["Do you want to proceed? [y/N]:"]
 
