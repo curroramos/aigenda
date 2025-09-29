@@ -1,6 +1,7 @@
 use crate::agent::memory::{ToolCall, ToolResult};
 use crate::agent::confirmation::ConfirmationHandler;
 use crate::agent::json_parser::JsonParser;
+use crate::agent::streaming::StreamingHandler;
 use crate::agent::ToolRegistry;
 use crate::error::AppResult;
 use chrono::Utc;
@@ -24,7 +25,59 @@ impl ToolExecutor {
         }
     }
 
-    /// Executes all tool calls found in a response
+    /// Executes all tool calls found in a response with streaming support
+    pub async fn execute_tools_from_response_streaming<H>(
+        &mut self,
+        response: &str,
+        registry: &ToolRegistry,
+        streaming_handler: &mut H,
+    ) -> AppResult<(Vec<ToolCall>, Vec<ToolResult>, String)>
+    where
+        H: StreamingHandler,
+    {
+        let tool_calls = self.json_parser.parse_tool_calls(response);
+
+        if tool_calls.is_empty() {
+            return Ok((Vec::new(), Vec::new(), String::new()));
+        }
+
+        let mut executed_calls = Vec::new();
+        let mut tool_results = Vec::new();
+        let mut result_strings = Vec::new();
+
+        for call in tool_calls.iter() {
+            if let (Some(tool_name), Some(action)) = (
+                call.get("tool").and_then(|t| t.as_str()),
+                call.get("action").and_then(|a| a.as_str()),
+            ) {
+                let parameters = call.get("parameters").unwrap_or(&Value::Null);
+
+                // Request permission dynamically for each tool
+                let confirmed = streaming_handler.request_tool_permission(tool_name, action, parameters)?;
+
+                if confirmed {
+                    streaming_handler.on_tool_about_to_execute(tool_name, action, parameters)?;
+
+                    let (tool_call, tool_result, result_str) =
+                        self.execute_single_tool(call, registry).await?;
+
+                    streaming_handler.on_tool_executed(tool_name, action, &result_str, tool_result.success)?;
+
+                    executed_calls.push(tool_call);
+                    tool_results.push(tool_result);
+                    result_strings.push(result_str);
+                } else {
+                    let cancelled_msg = format!("Tool execution cancelled by user: {} -> {}", tool_name, action);
+                    result_strings.push(cancelled_msg.clone());
+                    streaming_handler.on_tool_executed(tool_name, action, &cancelled_msg, false)?;
+                }
+            }
+        }
+
+        Ok((executed_calls, tool_results, result_strings.join("\n")))
+    }
+
+    /// Legacy method for backward compatibility
     pub async fn execute_tools_from_response(
         &mut self,
         response: &str,

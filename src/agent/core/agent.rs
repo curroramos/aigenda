@@ -1,6 +1,7 @@
 use crate::agent::execution::{ChainExecutor, ContinuationDetector};
 use crate::agent::memory::ConversationMemory;
 use crate::agent::prompts::PromptGenerator;
+use crate::agent::streaming::{StreamingHandler, ConsoleStreamingHandler};
 use crate::agent::tool_executor::ToolExecutor;
 use crate::agent::ToolRegistry;
 use crate::error::AppResult;
@@ -68,8 +69,15 @@ impl Agent {
         self
     }
 
-    /// Main execution entry point
-    pub async fn execute_command(&mut self, input: &str) -> AppResult<String> {
+    /// Main execution entry point with streaming support
+    pub async fn execute_command_streaming<H>(
+        &mut self,
+        input: &str,
+        streaming_handler: &mut H
+    ) -> AppResult<String>
+    where
+        H: StreamingHandler,
+    {
         // Store user message in memory
         self.memory.add_user_message(input.to_string());
 
@@ -82,11 +90,15 @@ impl Agent {
         while continue_loop && loop_count < max_loops {
             loop_count += 1;
 
+            streaming_handler.on_iteration_start(loop_count)?;
+
             // Generate prompt for this iteration
             let prompt = self.generate_prompt_for_iteration(input, &execution_context, loop_count)?;
 
-            // Handle this iteration
-            let (iteration_result, should_continue) = self.handle_iteration(&prompt).await?;
+            // Handle this iteration with streaming
+            let (iteration_result, should_continue) = self.handle_iteration_streaming(&prompt, streaming_handler).await?;
+
+            streaming_handler.on_iteration_end(loop_count, &iteration_result)?;
 
             // Update conversation
             if !full_conversation.is_empty() {
@@ -112,6 +124,12 @@ impl Agent {
         Ok(full_conversation)
     }
 
+    /// Main execution entry point (legacy, non-streaming)
+    pub async fn execute_command(&mut self, input: &str) -> AppResult<String> {
+        let mut default_handler = ConsoleStreamingHandler::new();
+        self.execute_command_streaming(input, &mut default_handler).await
+    }
+
     /// Generates prompt for a specific iteration
     fn generate_prompt_for_iteration(
         &self,
@@ -131,7 +149,50 @@ impl Agent {
         }
     }
 
-    /// Handles a single iteration of the chain
+    /// Handles a single iteration of the chain with streaming
+    async fn handle_iteration_streaming<H>(
+        &mut self,
+        prompt: &str,
+        streaming_handler: &mut H
+    ) -> AppResult<(String, bool)>
+    where
+        H: StreamingHandler,
+    {
+        // Send to Claude API
+        let claude_client = self.claude_client.as_ref()
+            .ok_or_else(|| crate::error::AppError::Storage("Claude client not configured".to_string()))?;
+
+        let assistant_response = claude_client.chat(prompt).await?;
+
+        // Stream the LLM response immediately
+        streaming_handler.on_llm_response(&assistant_response)?;
+
+        // Execute any tool calls in the response with streaming
+        let (tool_calls, tool_results, tool_output) = self.tool_executor
+            .execute_tools_from_response_streaming(&assistant_response, &self.registry, streaming_handler)
+            .await?;
+
+        // Build iteration result
+        let mut iteration_result = assistant_response.clone();
+        if !tool_output.is_empty() {
+            iteration_result.push_str("\n\n**Tool Results:**\n");
+            iteration_result.push_str(&tool_output);
+        }
+
+        // Store complete response in memory
+        self.memory.add_assistant_message(assistant_response.clone(), Some(tool_calls));
+        for result in tool_results {
+            self.memory.add_tool_results(vec![result]);
+        }
+
+        // Determine if we should continue the chain
+        let should_continue = !tool_output.is_empty() &&
+            self.continuation_detector.should_continue(&assistant_response);
+
+        Ok((iteration_result, should_continue))
+    }
+
+    /// Handles a single iteration of the chain (legacy, non-streaming)
     async fn handle_iteration(&mut self, prompt: &str) -> AppResult<(String, bool)> {
         // Send to Claude API
         let claude_client = self.claude_client.as_ref()

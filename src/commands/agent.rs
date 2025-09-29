@@ -1,5 +1,5 @@
 #[cfg(feature = "ai")]
-use crate::agent::Agent;
+use crate::agent::{Agent, ConsoleStreamingHandler};
 #[cfg(feature = "ai")]
 use crate::ai::claude::ClaudeClient;
 use crate::error::AppResult;
@@ -24,9 +24,10 @@ pub async fn handle_agent_command(prompt: Vec<String>) -> AppResult<()> {
 
         println!("🤖 Processing your request...");
 
-        match agent.execute_command(&input).await {
-            Ok(response) => {
-                println!("\n✅ {}", response);
+        let mut streaming_handler = ConsoleStreamingHandler::new();
+        match agent.execute_command_streaming(&input, &mut streaming_handler).await {
+            Ok(_response) => {
+                println!("\n✅ Command completed successfully!");
             }
             Err(e) => {
                 eprintln!("❌ Error executing command: {}", e);
