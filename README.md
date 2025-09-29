@@ -1,6 +1,15 @@
-# aigenda
+<div align="center">
 
-> AI-ready daily notes CLI - your digital journal for the modern age
+  <img src="https://github.com/user-attachments/assets/d4522d4d-9841-473e-84b5-6002e7e0a11c" 
+       alt="Aigenda Logo" 
+       width="140" />
+
+  <h1>aigenda</h1>
+
+  <p><em>AI-ready daily notes CLI — your digital journal for the modern age</em></p>
+
+</div>
+
 
 A fast, simple command-line tool for capturing daily thoughts, ideas, and notes. Built in Rust for speed and reliability, with AI integration ready for the future.
 
