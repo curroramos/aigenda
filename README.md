@@ -1,4 +1,4 @@
-# 🤖 aigenda
+# aigenda
 
 > AI-ready daily notes CLI - your digital journal for the modern age
 
@@ -6,12 +6,12 @@ A fast, simple command-line tool for capturing daily thoughts, ideas, and notes.
 
 ## ✨ Features
 
-- **📝 Quick Note Taking**: Add notes instantly from anywhere in your terminal
-- **📅 Daily Organization**: Automatically organizes notes by date
-- **🔍 Flexible Viewing**: List today's notes, specific dates, or everything
-- **💾 Local Storage**: Your data stays on your machine as simple JSON files
-- **🚀 Lightning Fast**: Built in Rust for maximum performance
-- **🤖 AI-Ready**: Designed with future AI integrations in mind
+- **Quick Note Taking**: Add notes instantly from anywhere in your terminal
+- **Daily Organization**: Automatically organizes notes by date
+- **Flexible Viewing**: List today's notes, specific dates, or everything
+- **Local Storage**: Your data stays on your machine as simple JSON files
+- **Lightning Fast**: Built in Rust for maximum performance
+- **AI-Ready**: Designed with future AI integrations in mind
 
 ## 🚀 Quick Start
 
@@ -186,7 +186,6 @@ cargo build --release
 
 - **Phase 1** (Current): ✅ Basic note-taking and listing
 - **Phase 2**: 🔄 AI integration, search, export features
-- **Phase 3**: 📱 Cross-platform sync, mobile companion
 
 ## 🤝 Contributing
 
@@ -220,7 +219,7 @@ aigenda add "Had a brilliant idea during coffee"
 
 ### What I Learned Building This
 
-**Rust Error Handling is Chef's Kiss** 👨‍🍳💋
+**Rust Error Handling is Amazing**
 Coming from JavaScript/Python, Rust's `Result<T, E>` felt verbose at first. Now? I can't imagine building CLI tools any other way. Every error is handled explicitly, no silent failures.
 
 **Traits > Inheritance**
@@ -260,4 +259,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 > Built with ❤️ and 🦀 Rust
-> *"The best camera is the one you have with you. The best note-taking app is the one in your terminal."*
+
