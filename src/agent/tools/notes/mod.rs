@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use serde_json::Value;
-use crate::agent::tools::{Tool, ToolAction};
+use crate::agent::tools::{Tool, ToolAction, ToolSchema, ToolCategory, ActionSchema, ParameterSchema, ParameterType, ReturnSchema, ToolExample};
 use crate::error::AppResult;
 use crate::storage::Storage;
 use crate::models::{Note, DayLog};
@@ -139,6 +139,174 @@ impl Tool for NotesTool {
 
     fn description(&self) -> &str {
         "Manage daily notes with full CRUD operations"
+    }
+
+    fn category(&self) -> ToolCategory {
+        ToolCategory::Internal
+    }
+
+    fn get_schema(&self) -> ToolSchema {
+        ToolSchema {
+            name: "notes".to_string(),
+            description: "Manage daily notes with full CRUD operations. Notes are automatically organized by date and stored locally as JSON files.".to_string(),
+            category: ToolCategory::Internal,
+            actions: vec![
+                ActionSchema {
+                    name: "create".to_string(),
+                    description: "Add a new note to today's log or a specific date".to_string(),
+                    parameters: vec![
+                        ParameterSchema {
+                            name: "text".to_string(),
+                            description: "The content of the note".to_string(),
+                            param_type: ParameterType::String { max_length: Some(5000) },
+                            required: true,
+                            default_value: None,
+                            validation: None,
+                        },
+                        ParameterSchema {
+                            name: "date".to_string(),
+                            description: "Date for the note in YYYY-MM-DD format".to_string(),
+                            param_type: ParameterType::Date,
+                            required: false,
+                            default_value: Some(serde_json::Value::String("today".to_string())),
+                            validation: None,
+                        },
+                    ],
+                    returns: ReturnSchema {
+                        description: "Confirmation message with the date the note was added".to_string(),
+                        return_type: ParameterType::String { max_length: None },
+                        possible_errors: vec!["Invalid date format".to_string()],
+                    },
+                },
+                ActionSchema {
+                    name: "read".to_string(),
+                    description: "Read notes from a specific date or recent notes across multiple days".to_string(),
+                    parameters: vec![
+                        ParameterSchema {
+                            name: "date".to_string(),
+                            description: "Date in YYYY-MM-DD format to read notes from".to_string(),
+                            param_type: ParameterType::Date,
+                            required: false,
+                            default_value: None,
+                            validation: None,
+                        },
+                        ParameterSchema {
+                            name: "limit".to_string(),
+                            description: "Maximum number of notes to return".to_string(),
+                            param_type: ParameterType::Integer { min: Some(1), max: Some(100) },
+                            required: false,
+                            default_value: Some(serde_json::Value::Number(serde_json::Number::from(10))),
+                            validation: None,
+                        },
+                    ],
+                    returns: ReturnSchema {
+                        description: "List of notes with timestamps and content".to_string(),
+                        return_type: ParameterType::String { max_length: None },
+                        possible_errors: vec!["Date not found".to_string(), "Invalid date format".to_string()],
+                    },
+                },
+                ActionSchema {
+                    name: "update".to_string(),
+                    description: "Update an existing note by its position/index".to_string(),
+                    parameters: vec![
+                        ParameterSchema {
+                            name: "date".to_string(),
+                            description: "Date of the note in YYYY-MM-DD format".to_string(),
+                            param_type: ParameterType::Date,
+                            required: true,
+                            default_value: None,
+                            validation: None,
+                        },
+                        ParameterSchema {
+                            name: "index".to_string(),
+                            description: "Position of the note to update (1-based index)".to_string(),
+                            param_type: ParameterType::Integer { min: Some(1), max: None },
+                            required: true,
+                            default_value: None,
+                            validation: None,
+                        },
+                        ParameterSchema {
+                            name: "text".to_string(),
+                            description: "New content for the note".to_string(),
+                            param_type: ParameterType::String { max_length: Some(5000) },
+                            required: true,
+                            default_value: None,
+                            validation: None,
+                        },
+                    ],
+                    returns: ReturnSchema {
+                        description: "Confirmation message with the updated note details".to_string(),
+                        return_type: ParameterType::String { max_length: None },
+                        possible_errors: vec!["Note not found".to_string(), "Invalid date format".to_string(), "Invalid index".to_string()],
+                    },
+                },
+                ActionSchema {
+                    name: "delete".to_string(),
+                    description: "Delete a specific note by its position/index".to_string(),
+                    parameters: vec![
+                        ParameterSchema {
+                            name: "date".to_string(),
+                            description: "Date of the note in YYYY-MM-DD format".to_string(),
+                            param_type: ParameterType::Date,
+                            required: true,
+                            default_value: None,
+                            validation: None,
+                        },
+                        ParameterSchema {
+                            name: "index".to_string(),
+                            description: "Position of the note to delete (1-based index)".to_string(),
+                            param_type: ParameterType::Integer { min: Some(1), max: None },
+                            required: true,
+                            default_value: None,
+                            validation: None,
+                        },
+                    ],
+                    returns: ReturnSchema {
+                        description: "Confirmation message with the deleted note details".to_string(),
+                        return_type: ParameterType::String { max_length: None },
+                        possible_errors: vec!["Note not found".to_string(), "Invalid date format".to_string(), "Invalid index".to_string()],
+                    },
+                },
+            ],
+            examples: vec![
+                ToolExample {
+                    description: "Create a simple note for today".to_string(),
+                    user_request: "add a note about finishing the AI implementation".to_string(),
+                    tool_call: serde_json::json!({
+                        "tool": "notes",
+                        "action": "create",
+                        "parameters": {
+                            "text": "Finished implementing AI tools with enhanced memory and schema support"
+                        }
+                    }),
+                    expected_result: "Note added successfully for 2025-09-28".to_string(),
+                },
+                ToolExample {
+                    description: "Read today's notes".to_string(),
+                    user_request: "show me today's notes".to_string(),
+                    tool_call: serde_json::json!({
+                        "tool": "notes",
+                        "action": "read",
+                        "parameters": {}
+                    }),
+                    expected_result: "Notes for 2025-09-28:\n1. [20:45] Finished implementing AI tools".to_string(),
+                },
+                ToolExample {
+                    description: "Update a specific note".to_string(),
+                    user_request: "update my first note from today".to_string(),
+                    tool_call: serde_json::json!({
+                        "tool": "notes",
+                        "action": "update",
+                        "parameters": {
+                            "date": "2025-09-28",
+                            "index": 1,
+                            "text": "Updated: Completed implementing AI tools with memory and enhanced schemas"
+                        }
+                    }),
+                    expected_result: "Note 1 updated successfully for 2025-09-28".to_string(),
+                },
+            ],
+        }
     }
 
     fn actions(&self) -> Vec<ToolAction> {

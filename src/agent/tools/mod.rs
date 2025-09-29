@@ -4,13 +4,39 @@ use crate::error::AppResult;
 
 pub mod notes;
 pub mod external;
+pub mod schema;
+
+pub use schema::{ToolSchema, ToolCategory, ActionSchema, ParameterSchema, ParameterType, ValidationRule, ReturnSchema, ToolExample};
 
 #[async_trait]
 pub trait Tool: Send + Sync {
     fn name(&self) -> &str;
     fn description(&self) -> &str;
+    fn category(&self) -> ToolCategory;
+
+    // Enhanced schema support
+    fn get_schema(&self) -> ToolSchema;
+
+    // Legacy support (will be deprecated)
     fn actions(&self) -> Vec<ToolAction>;
+
     async fn execute(&self, action: &str, parameters: &Value) -> AppResult<String>;
+}
+
+// Enhanced trait for tools with detailed schemas
+#[async_trait]
+pub trait AdvancedTool: Tool {
+    async fn validate_parameters(&self, action: &str, parameters: &Value) -> AppResult<()>;
+    fn get_examples(&self) -> Vec<ToolExample>;
+    async fn execute_with_metadata(&self, action: &str, parameters: &Value) -> AppResult<ExecutionResult>;
+}
+
+#[derive(Debug, Clone)]
+pub struct ExecutionResult {
+    pub success: bool,
+    pub result: String,
+    pub execution_time_ms: u64,
+    pub metadata: Option<Value>,
 }
 
 #[derive(Clone, Debug)]
