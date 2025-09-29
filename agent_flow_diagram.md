@@ -3,6 +3,7 @@
 ## Complete Agent Architecture and Flow
 
 ```mermaidgraph TD
+graph TD
     A["User Input: \"aigenda ai 'request'\""] --> B["Agent::execute_command"]
 
     B --> C["Store user message in memory"]
