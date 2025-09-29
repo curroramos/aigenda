@@ -1,6 +1,6 @@
 use crate::{
     error::AppResult,
-    models::{DayLog, Note},
+    models::Note,
     storage::Storage,
 };
 use chrono::Local;
@@ -15,6 +15,6 @@ pub fn run_add<S: Storage>(store: &S, words: Vec<String>) -> AppResult<()> {
         tags: vec![],
     });
     store.save_day(&day)?;
-    println!("Added note to {}.", day.date);
+    println!("Added note to {}.", day.date.format("%Y-%m-%d"));
     Ok(())
 }

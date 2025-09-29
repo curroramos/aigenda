@@ -11,7 +11,9 @@ pub struct App<S: Storage> {
 }
 
 impl<S: Storage> App<S> {
-    pub fn new(store: S, cli: Cli) -> Self { Self { store, cli } }
+    pub fn new(store: S, cli: Cli) -> Self {
+        Self { store, cli }
+    }
 
     pub fn run(&self) -> AppResult<()> {
         match &self.cli.command {

@@ -1,4 +1,8 @@
-use crate::{error::{AppError, AppResult}, models::DayLog, storage::Storage};
+use aigenda::{
+    error::{AppError, AppResult},
+    models::DayLog,
+    storage::Storage,
+};
 use chrono::NaiveDate;
 use directories::ProjectDirs;
 use std::{fs, io::Write, path::PathBuf};
@@ -25,18 +29,14 @@ impl Storage for FsStorage {
     fn load_day(&self, date: NaiveDate) -> AppResult<DayLog> {
         let p = self.day_path(date);
         if !p.exists() {
-            return Ok(DayLog {
-                date: date.format("%Y-%m-%d").to_string(),
-                ..Default::default()
-            });
+            return Ok(DayLog::new(date));
         }
         let bytes = fs::read(p)?;
         Ok(serde_json::from_slice(&bytes)?)
     }
 
     fn save_day(&self, day: &DayLog) -> AppResult<()> {
-        let date = NaiveDate::parse_from_str(&day.date, "%Y-%m-%d")?;
-        let p = self.day_path(date);
+        let p = self.day_path(day.date);
         let json = serde_json::to_vec_pretty(day)?;
         let mut f = fs::File::create(p)?;
         f.write_all(&json)?;
