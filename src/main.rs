@@ -1,10 +1,17 @@
-use clap::Parser;
-use aigenda::app::App;
-use aigenda::cli::Cli;
-use aigenda::error::Result;
+mod ai;
+mod app;
+mod cli;
+mod commands;
+mod config;
+mod error;
+mod models;
+mod storage;
 
-fn main() -> Result<()> {
-    let cli = Cli::parse();
-    let app = App::new()?;
-    app.run(cli)
+use clap::Parser;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let cli = cli::Cli::parse();
+    let app = app::build_default(cli)?;
+    app.run()?;
+    Ok(())
 }
