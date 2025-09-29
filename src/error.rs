@@ -10,8 +10,6 @@ pub enum AppError {
     ChronoParse(#[from] chrono::ParseError),
     #[error("storage: {0}")]
     Storage(String),
-    #[error("{0}")]
-    Other(String),
 }
 
 pub type AppResult<T> = Result<T, AppError>;

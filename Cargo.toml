@@ -23,6 +23,3 @@ ai = ["reqwest", "tokio", "dotenvy"]
 assert_cmd = "2"
 tempfile = "3"
 
-[alias]
-fmt = "fmt --all"
-lint = "clippy --all-targets --all-features -- -D warnings"
