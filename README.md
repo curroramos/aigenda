@@ -6,7 +6,7 @@
 
   <h1>aigenda</h1>
 
-  <p><em>AI-ready daily notes CLI — your digital journal for the modern age</em></p>
+  <p><em>AI-ready daily notes CLI - your digital journal for the modern age</em></p>
 
 </div>
 
